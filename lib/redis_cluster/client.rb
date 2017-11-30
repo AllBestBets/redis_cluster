@@ -15,7 +15,9 @@ module RedisCluster
       ttl = Configuration::REQUEST_TTL
       asking = false
       try_random_node = false
-
+      if defined?(ActiveSupport)
+        ActiveSupport::Notifications.publish 'redis.query', method, args
+      end
       while ttl > 0
         ttl -= 1
         begin
