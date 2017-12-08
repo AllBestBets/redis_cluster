@@ -15,8 +15,10 @@ module RedisCluster
       node = @nodes.find { |n| n.name == new_node.name } || new_node
       node.slots = slots
 
-      slots.each do |slot|
-        @slot_cache[slot] = node
+      slots.each do |range|
+        range.each do |slot|
+          @slot_cache[slot] = node
+        end
       end
 
       @nodes.push(node).uniq!
