@@ -5,6 +5,7 @@ module RedisCluster
 
     def initialize(global_configs = {})
       @nodes = []
+      @slot_cache = {}
       @global_configs = global_configs
     end
 
@@ -13,6 +14,11 @@ module RedisCluster
       new_node = Node.new(global_configs.merge(node_options))
       node = @nodes.find { |n| n.name == new_node.name } || new_node
       node.slots = slots
+
+      slots.each do |slot|
+        @slot_cache[slot] = node
+      end
+
       @nodes.push(node).uniq!
     end
 
@@ -33,6 +39,10 @@ module RedisCluster
       node = other_options[:random_node] ? random_node : node_by(key)
       node.asking if other_options[:asking]
       node.execute(method, args, &block)
+    end
+
+    def flushdb
+      on_each_node(:flushdb)
     end
 
     def keys(args, &block)
@@ -58,7 +68,7 @@ module RedisCluster
 
     def node_by(key)
       slot = Slot.slot_by(key)
-      @nodes.find { |node| node.has_slot?(slot) }
+      @slot_cache[slot]
     end
 
     def random_node
