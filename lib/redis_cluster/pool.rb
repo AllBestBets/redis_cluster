@@ -44,7 +44,9 @@ module RedisCluster
     end
 
     def flushdb
-      on_each_node(:flushdb)
+      @nodes.each do |node|
+        node.execute :flushdb
+      end
     end
 
     def keys(args, &block)
