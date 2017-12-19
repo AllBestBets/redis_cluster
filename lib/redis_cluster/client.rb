@@ -31,12 +31,6 @@ module RedisCluster
         rescue => e
           err_code = e.to_s.split.first
 
-          if err_code == 'CLUSTERDOWN'
-            reconnect
-            sleep 0.1
-            next
-          end
-
           raise e unless %w(MOVED ASK).include?(err_code)
 
           if err_code == 'ASK'
@@ -47,6 +41,9 @@ module RedisCluster
           end
         end
       end
+    rescue Exception => e
+      reconnect if e.to_s.split.first == 'CLUSTERDOWN'
+      raise e
     end
 
     Configuration.method_names.each do |method_name|
