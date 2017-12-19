@@ -3,9 +3,15 @@ require 'thread'
 module RedisCluster
 
   class Client
+    attr_reader :global_configs
 
     def initialize(startup_hosts, global_configs = {})
       @startup_hosts = startup_hosts
+      @global_configs = global_configs
+      reconnect
+    end
+
+    def reconnect
       @pool = Pool.new(global_configs)
       @mutex = Mutex.new
       reload_pool_nodes(true)
@@ -24,6 +30,12 @@ module RedisCluster
           sleep 0.1 if ttl < Configuration::REQUEST_TTL / 2
         rescue => e
           err_code = e.to_s.split.first
+
+          if err_code == 'CLUSTERDOWN'
+            reconnect
+            return
+          end
+
           raise e unless %w(MOVED ASK).include?(err_code)
 
           if err_code == 'ASK'
