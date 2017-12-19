@@ -33,7 +33,8 @@ module RedisCluster
 
           if err_code == 'CLUSTERDOWN'
             reconnect
-            return
+            sleep 0.1
+            next
           end
 
           raise e unless %w(MOVED ASK).include?(err_code)
@@ -67,10 +68,10 @@ module RedisCluster
         @startup_hosts.each do |options|
           begin
             redis = Node.redis(@pool.global_configs.merge(options))
-            slots_mapping = redis.cluster("slots").group_by{|x| x[2]}
+            slots_mapping = redis.cluster("slots").group_by {|x| x[2]}
             @pool.delete_except!(slots_mapping.keys)
             slots_mapping.each do |host, infos|
-              slots_ranges = infos.map {|x| x[0]..x[1] }
+              slots_ranges = infos.map {|x| x[0]..x[1]}
               @pool.add_node!({host: host[0], port: host[1]}, slots_ranges)
             end
           rescue Redis::CommandError => e
@@ -87,7 +88,7 @@ module RedisCluster
     end
 
     def fresh_startup_nodes
-      @pool.nodes.each {|node| @startup_hosts.push(node.host_hash) }
+      @pool.nodes.each {|node| @startup_hosts.push(node.host_hash)}
       @startup_hosts.uniq!
     end
 
