@@ -15,7 +15,6 @@ module RedisCluster
       ttl = Configuration::REQUEST_TTL
       asking = false
       try_random_node = false
-
       while ttl > 0
         ttl -= 1
         begin
